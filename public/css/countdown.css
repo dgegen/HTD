@@ -1,0 +1,29 @@
+/* Countdown styles */
+#countdown-container {
+  color: #00ffcc; /* Teal color */
+  font-family: "Orbitron", "Helvetica", sans-serif;
+  text-align: center;
+}
+
+#countdown-text {
+  font-size: 1.5em;
+}
+
+#countdown {
+  font-size: 2.5em;
+  font-weight: bold;
+}
+
+.blink {
+  animation: blink 0.5s infinite;
+}
+
+@keyframes blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}

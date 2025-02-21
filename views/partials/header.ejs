@@ -1,0 +1,50 @@
+<!-- views/partials/header.html -->
+<header>
+  <div class="logo" style="padding-left: 10px; padding-top: 10px; padding-bottom: 0px;">
+    <!-- Logo -->
+    <a href="/profile" class="logo-link">
+      <img src="/logos/logo_2.svg" alt="Transit Olympics" class="logo-img">
+    </a>
+    <link rel="stylesheet" type="text/css" href="/css/styles.css" />        
+  </div>
+  <!-- Hamburger menu icon -->
+  <input type="checkbox" id="side-menu" class="hamburger-checkbox">
+  <label class="hamburger-icon" for="side-menu">
+    <div class="hamburger-line"></div>
+    <div class="hamburger-line"></div>
+    <div class="hamburger-line"></div>
+  </label>
+
+  <!-- Menu -->
+  <nav class="main-nav">
+    <!-- Navigation links -->
+    <ul>
+      <li><a href="/classify">Transits</a></li>
+      <li><a href="/classify/dark">Rush</a></li>
+    </ul>
+    <ul class="user-nav">
+      <!-- Use a conditional check to display either login or logout link -->
+      <% if (authenticated) { %>
+        <li><a href="/logout">Logout</a></li>
+      <% } else { %>
+      <li><a href="/login">Login</a></li>
+      <!-- <li><a href="/register">Register</a></li> -->
+      <% } %>
+    </ul>
+  </nav>
+
+  <!-- Dropdown Menu for small screens -->
+  <div class="dropdown-menu">
+    <ul class="menu-items">
+      <li><a href="/classify">Transits</a></li>
+      <li><a href="/classify/dark">Rush</a></li>
+      <!-- You can add more items here -->
+      <% if (authenticated) { %>
+      <li><a href="/logout">Logout</a></li>
+      <% } else { %>
+      <li><a href="/login">Login</a></li>
+      <!-- <li><a href="/register">Register</a></li> -->
+      <% } %>
+    </ul>
+  </div>
+</header>

@@ -1,0 +1,75 @@
+/* Base D3 Styles */
+
+/* Dark Version 2 */
+:root.dark {
+  --plot-axis-text-color: white;
+  --plot-circle-color: white;
+  --plot-line-color: white;
+  --plot-time-stamp-line-color: rgb(154, 3, 255);
+  --plot-variance-warning-color: #ff0066;
+  --plot-data-color: rgb(40, 65, 202);
+  --plot-model-line-color: rgb(125, 145, 255);
+  --plot-model-line-opacity: 0.5;
+}
+
+.axis-text {
+  color: var(--plot-axis-text-color, black);
+  font-size: 12px;
+}
+
+.axis-label {
+  text-anchor: middle;
+  font-size: 16px;
+  color: var(--plot-axis-text-color, black);
+  fill: var(--plot-axis-text-color, black);
+}
+
+/* .bottom-circle, */
+.bin-circle {
+  fill: var(--plot-circle-color, black);
+}
+
+.bin-error-line,
+.vertical-line,
+.vertical-line:hover {
+  stroke: var(--plot-line-color, black);
+}
+
+.data-circle {
+  stroke: var(--plot-data-color, rgb(195, 195, 195));
+  /* stroke-width: 0.5px; */
+  fill: var(--plot-data-color, rgb(195, 195, 195));
+}
+.data-error-line {
+  stroke: var(--plot-data-color, rgb(195, 195, 195));
+  stroke-width: 0.5px;
+}
+
+.click-line {
+  stroke: var(--plot-time-stamp-line-color, rgba(253, 75, 75, 0.71));
+  stroke-width: 3px;
+  cursor: pointer;
+}
+
+.delete-circle {
+  stroke: var(--plot-time-stamp-line-color, black);
+  cursor: pointer;
+}
+
+.crossLines {
+  stroke: var(--plot-line-color, white);
+  stroke-width: 2;
+  cursor: pointer;
+}
+
+.model-line-plot-group,
+.model-line-plot {
+  stroke: var(--plot-model-line-color, rgb(80, 80, 221));
+  stroke-width: 2;
+  opacity: var(--plot-model-line-opacity, 0.4);
+  fill: none;
+}
+
+:root {
+  --plot-variance-warning-color: rgba(255, 0, 0, 0.682);
+}

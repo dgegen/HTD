@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="stylesheet" type="text/css" href="/css/styles.css" />
+  <meta charset="utf-8" />
+  <title>User Profile</title>
+  <%- include('../partials/header.ejs', {authenticated:true}) %>
+  <style>
+    /* CSS styling for the enhanced space-themed table */
+    .top-users {
+      margin-top: 20px;
+    }
+    
+    .top-users table {
+      width: 100%;
+      border-collapse: collapse;
+      background-color:rgb(154, 3, 255);;
+      color: #fff;
+      font-family: 'Roboto', sans-serif;
+    }
+    
+    .top-users th, .top-users td {
+      border: 1px solid rgb(255, 247, 247);
+      padding: 15px;
+      text-align: left;
+      font-size: 18px;
+    }
+    
+    .top-users th {
+      background-color: #110241;
+      text-transform: uppercase;
+    }
+    
+    .top-users td {
+      background-color:#4f1a81;
+    }
+
+    /* Animated glow effect for table headers */
+    .top-users th {
+      position: relative;
+    }
+
+    .top-users th::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      animation: glow 2s infinite alternate;
+    }
+
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Welcome <%= username %>!</h1>
+    <p>Prepare to immerse yourself in the captivating world of transit data classification. Together, we are on a mission to unravel the mysteries of the cosmos by identifying and categorizing planetary transits. Your keen eyes and analytical minds are invaluable as we sift through vast amounts of data to pinpoint these celestial phenomena. By contributing some of your time and attention, you're not just exploring human kinds remote sensing of the universe — you're actively helping to our understanding of it.</p>
+      
+    <p> Join us as we embark on this collaborative journey of discovery and make astronomical breakthroughs, one classification at a time. Together, we'll unveil the secrets of the stars and unveil the wonders of the universe. Let's dive in and classify some transits!</p>
+    <br>
+    <% if (topUsers && topUsers.length > 0) { %>
+      <div class="top-users">
+        <h1>Hall of Fame</h1>
+        <table>
+          <thead>
+            <tr>
+              <th>Username</th>
+              <th># Files Classified</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% topUsers.forEach(function(user) { %>
+              <tr>
+                <td><%= user.username %></td>
+                <td><%= user.classified_file_count %></td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+    <% } else { %>
+      <p>No top users found.</p>
+    <% } %>
+  </div>
+</body>
+</html>

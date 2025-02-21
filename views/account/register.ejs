@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="BasicAuth">
+  <meta name="author" content="siddub">
+  <title>Create an account</title>
+  <link rel="stylesheet" type="text/css" href="/css/styles.css">
+  <%- include('../partials/header.ejs',  { authenticated:false }) %>
+</head>
+
+<body>
+  <div class="container">
+    <form id="registerForm" class="login-form" method="POST" action="/register">
+      <h2 class="form-heading">Create your Account</h2>
+      <%= errors %>
+      <input name="username" type="text" class="form-control" placeholder="Username" autofocus="true" />
+      <!-- <input name="email" type="text" class="form-control" placeholder="Email" /> -->
+      <input name="password" type="password" class="form-control" placeholder="Password" />
+      <input name="passwordConfirm" type="password" class="form-control" placeholder="Password confirm" />
+
+      <button class="btn btn-lg btn-primary btn-block" type="submit">Sign up</button>
+
+      <div style="text-align: center; margin-bottom: 10px; margin-top: 15px;">Already have an account? <a
+        href='/login'>Login</a></div>
+
+
+    </form>
+  </div>
+
+  <style>
+    input {
+      margin-bottom: 15px;
+    }
+
+    h2 {
+      text-align: center;
+    }
+
+    .container {
+      width: 50%;
+      margin: auto;
+      margin-top: 50px;
+    }
+  </style>
+</body>
+
+</html>
