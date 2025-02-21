@@ -7,8 +7,8 @@ This project is a web application designed for data classification and visualiza
 
 1. Clone the repository
     ```bash
-    git clone git@gitlab.ethz.ch:ddegen/htd-website.git
-    cd htd-website
+    git clone git@github.com:dgegen/HTD.git
+    cd HTD
     ```
 2. Install **[Node.js](https://nodejs.org/en/download)**
 3. Install dependencies
