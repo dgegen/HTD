@@ -31,7 +31,19 @@ This project is a web application designed for data classification and visualiza
         ```bash
         mysql -u your_username -p htd < migrations/database_structure.sql
         ```
-6. Change `config/config.json`. This might including changing the `host` (e.g. to `localhost`), changing the `username` or the `password` of the MySQL database. `__password__` was used to indicate the case where the database has no password.
+6. Configuration
+    1. Copy the example configuration file to create your own configuration file. Run the following command in your terminal:
+    
+       ```bash
+       cp config/config_example.json config/config.json
+       ```
+
+    2. Open `config/config.json` in your preferred text editor and make the necessary modifications. You will need to update the following fields:
+    
+       - **`host`**: Set this to your database host (e.g., `localhost`).
+       - **`username`**: Enter your MySQL database username.
+       - **`password`**: Provide your MySQL database password. If your database does not require a password, you can use `__password__` as a placeholder.
+       - **`max_file_id`**: Specify the maximum number of files you want to allow for classification by users. Adjust this number according to your needs.
 
 7. Add some data
     ```bash
