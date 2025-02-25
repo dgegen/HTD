@@ -1,0 +1,29 @@
+{
+  "development": {
+    "username": "username",
+    "password": "password",
+    "database": "htd",
+    "host": "localhost",
+    "dialect": "mysql",
+    "secretTokenKey": "some_secret_key",
+    "max_file_id": 50
+  },
+  "test": {
+    "username": "username",
+    "password": "password",
+    "database": "htd",
+    "host": "localhost",
+    "dialect": "mysql",
+    "secretTokenKey": "some_secret_key",
+    "max_file_id": 50
+  },
+  "production": {
+    "username": "username",
+    "password": "password",
+    "database": "htd",
+    "host": "localhost",
+    "dialect": "mysql",
+    "secretTokenKey": "some_secret_key",
+    "max_file_id": 50
+  }
+}
