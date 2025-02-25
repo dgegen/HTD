@@ -1,7 +1,7 @@
 {
   "development": {
     "username": "myUsername",
-    "__password__": "myPassword",
+    "password": "myPassword",
     "database": "htd",
     "host": "127.0.0.1",
     "dialect": "mysql",
