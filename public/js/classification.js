@@ -18,6 +18,7 @@ class NetworkManager {
         flux_err: +d.flux_err,
         fwhm: +d.fwhm,
         color: d.color,
+        prob: +d.prob
         // pixel_shift: +d.pixel_shift
       };
     });
@@ -60,7 +61,7 @@ class NetworkManager {
       });
   }
 
-  fetchData(token = null) {
+  fetchData(token = null) { //file fetching for models and data
     console.log(`Fetching files${token ? " with token" : ""}.`);
     return Promise.all([
       this.fetchFile(token, 'data', this.parseDataCSV),
@@ -122,7 +123,7 @@ class GraphDimensions {
     this.innerHeightPlot = 0;
     this.interPanelPadding = 20;
     this.panelHeightFractions = [0.8];
-    this.panelNames = ["flux"];
+    this.panelNames = ["flux", "prob"];
     this.panelHeights = [];
     this.lcPanelHeight = 0;
     this.fwhmPanelHeight = 0;
@@ -391,12 +392,15 @@ class Panel {
       yScale = null,
     } = options;
     const panelIndex = graphDimensions.panelNames.indexOf(panelName);
-    const translateY = graphDimensions.panelTops[panelIndex];
+    //const translateY = graphDimensions.panelTops[panelIndex];
+    const totalHeight = graphDimensions.panelHeights[0];// total height, assigned by graphdimensions
+    this.panelHeight = panelName === "flux" ? totalHeight * 0.75 : totalHeight * 0.25; //ensures the flux gets 75% of the space, the probability 25%
+    const translateY = panelIndex === 0 ? 0 : totalHeight * 0.75; // Position panels correctly
 
     this.graphDimensions = graphDimensions;
     this.panel = svg.append("g").attr("transform", `translate(0, ${translateY})`);
     this.panelIndex = panelIndex;
-    this.panelHeight = graphDimensions.panelHeights[this.panelIndex];
+    //this.panelHeight = graphDimensions.panelHeights[this.panelIndex];
     this.panelName = panelName;
     this.yDataKey = yDataKey;
     this.xScale = xScale;
@@ -425,13 +429,17 @@ class Panel {
 
     this.setYLabel();
 
-    this.plotDataWithBins(data, 0.01);
+
+      this.plotDataWithBins(data, 0.02     ); //adjust here the bin-size of the (black) binned points to the needs of the data
   };
 
 
   plotDataWithBins(data, bin_duration=0.01) {
     this.plotErrorBar(data, "data");
-    this.plotErrorBar(binData(data, bin_duration, this.yDataKey), "bin");
+    if (this.yDataKey == "flux"){
+      this.plotErrorBar(binData(data, bin_duration, this.yDataKey), "bin");
+    }
+    
   }
 
 
@@ -459,9 +467,14 @@ class Panel {
 
     // Make sure, the data points end up within the yScale image range
     const filteredData = filterDataByYScaleDomain(data, this.yScale, yColumnName);
-
-    // Create circles in the top panel
-    this.plotScatter(filteredData, class_name, radius);
+    
+    let color="black";
+    if (this.yDataKey =="prob"){ //to plot it red for Probability
+      color="red";
+      console.log("entered if-loop")
+  }
+    // Create circles in the top panel, creates the dots
+    this.plotScatter(filteredData, class_name, radius, color);
 
     // Create vertical bars for the error in the top panel
     if ((yColumnName + "_err") in data[0]){
@@ -660,7 +673,7 @@ class Panel {
   }
 
 
-  plotScatter(data, class_name="bin", radius=null){
+  plotScatter(data, class_name="bin", radius=null, color="black") {
     const self = this;
     if (class_name == "bin") {
         radius = radius ?? 3;
@@ -674,10 +687,11 @@ class Panel {
     self.panel.selectAll("." + class_name + "-circle")
         .data(data)
         .enter().append("circle")
-        .attr("class", class_name + "-circle")
+         .attr("class", class_name + "-circle"+ "-" + this.panelIndex)
         .attr("cx", d => self.xScale(d.time))
         .attr("cy", d => self.yScale(d[self.yDataKey]))
-        .attr("r", radius);
+        .attr("r", radius)
+        .attr("fill",color);
   }
 
   appendModelLinePlot(models, modelTimeArray) {
@@ -792,17 +806,18 @@ class Graph {
   
   
     // Create the LightCurve panel
-    let lcPanel = new Panel(svg, graphDimensions, data, 'flux', {xAxis, xScale, 'yLabel': 'Flux', plot: false, xAxisVisibility: "visible"});
-  
+    let lcPanel = new Panel(svg, graphDimensions, data, 'flux', { xAxis, xScale, 'yLabel': 'Flux', plot: false, xAxisVisibility:"hidden" });
     // Adapt the yScale to accommodate the models
     adaptLcYScale(models, lcPanel.yScale);
   
     lcPanel.PlotPanel(data);
     lcPanel.appendModelLinePlot(models, modelTimeArray);
+    let probpanel = new Panel(svg, graphDimensions, data, 'prob', { xAxis, xScale, 'yLabel': 'Probability', plot: false , xAxisVisibility:"visible"});
+    probpanel.PlotPanel(data);
     // lcPanel.plotVarianceBars(data, 'fwhm', 40);
     // lcPanel.plotColorBars(data, 'fwhm', 40);
-    lcPanel.setXLabel("Time [days]");
-  
+    probpanel.setXLabel("Time [days]");
+    //lcPanel.setXLabel("Time [days]");
     // Plot the fwhm panel
     // let  fwhmPanel = new Panel(svg, graphDimensions, data, 'fwhm', {xAxis, xScale, 'yLabel': 'FWHM'});
     // fwhmPanel.plotVarianceBars(data, 'fwhm', 40);
