@@ -8,6 +8,7 @@ class NetworkManager {
     this.data = null;
     this.models = null;
     this.fileId = null;
+    this.fileIndex = 0;
   }
 
   parseDataCSV(csvText) {
@@ -17,7 +18,8 @@ class NetworkManager {
         flux: +d.flux,
         flux_err: +d.flux_err,
         fwhm: +d.fwhm,
-        color: d.color,
+        // color: d.color,
+        injection: +d.injection,
         // pixel_shift: +d.pixel_shift
       };
     });
@@ -37,9 +39,9 @@ class NetworkManager {
     return parsedData;
   }
 
-  fetchFile(token, fileType, parseFunction) {
-    const url = token ? `/get_${fileType}/${token}` : `/get_${fileType}/`;
-    console.debug(`Fetching ${fileType}${token ? " with token" : ""}.`);
+  fetchFile(fileType, parseFunction) {
+    const url = `/get_tutorial_${fileType}/${this.fileIndex}`; // Use the local fileIndex
+    console.debug(`Fetching ${fileType} with index ${this.fileIndex}.`);
 
     return fetch(url)
       .then(response => {
@@ -47,7 +49,6 @@ class NetworkManager {
           throw new Error(`Network response was not ok, status: ${response.status}`);
         }
         this.fileId = parseInt(response.headers.get('file_id'));
-        this.ViewIndex = parseInt(response.headers.get('view_index'));
         return response.arrayBuffer();
       })
       .then(arrayBuffer => {
@@ -61,24 +62,24 @@ class NetworkManager {
       });
   }
 
-  fetchData(token = null) {
-    console.log(`Fetching files${token ? " with token" : ""}.`);
+  fetchData() {
+    console.log(`Fetching files.`);
     return Promise.all([
-      this.fetchFile(token, 'data', this.parseDataCSV),
-      this.fetchFile(token, 'models', this.parseModelsCSV)
-    ]).then(([newData, newModels]) => ({ newData, newModels }));
+      this.fetchFile('data', this.parseDataCSV),
+      this.fetchFile('models', this.parseModelsCSV)
+    ]).then(([newData, newModels]) => {
+      this.data = newData;
+      this.models = newModels;
+      console.debug('Data:', this.data);
+      console.debug('Models:', this.models);
+      this.fileIndex++; // Increment the fileIndex after fetching
+    });
   }
 
-  getNewData(token = null) {
+  getNewData() {
     return new Promise((resolve, reject) => {
-      this.fetchData(token)
-        .then(({ newData, newModels }) => {
-          this.data = newData;
-          this.models = newModels;
-          console.debug('Data:', this.data);
-          console.debug('Models:', this.models);
-          resolve();
-        })
+      this.fetchData()
+        .then(() => resolve())
         .catch(error => {
           console.error('Error during getNewData:', error);
           reject(error);
@@ -87,29 +88,11 @@ class NetworkManager {
   }
 
   submitData(postData) {
-    return fetch("/post", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(postData),
-    })
-      .then(async (response) => {
-        if (!response.ok) {
-          throw new Error(`Network response was not ok, status: ${response.status}`);
-        }
-  
-        const responseData = await response.json();
-        const downloadToken = responseData.downloadToken;
-  
-        return downloadToken;
-      })
-      .catch((error) => {
-        console.error("Error during POST request:", error);
-        throw error; // Re-throw the error for further handling if needed
-      });
-  }
-  
+    return new Promise((resolve, reject) => {
+        this.fileIndex++; // Increment fileId
+        resolve({ success: true, fileId: this.fileId });
+    });
+}
 }
 
 
@@ -426,7 +409,8 @@ class Panel {
 
     this.setYLabel();
 
-    this.plotDataWithBins(data, 0.01);
+    this.plotInjectionLine(data);
+    this.plotDataWithBins(data, 0.01);    
   };
 
 
@@ -476,6 +460,33 @@ class Panel {
             .attr("y2", d => self.yScale(d[yColumnName] + d[yColumnName + "_err"]))
             .attr("stroke-width", stroke_width);
     }
+  }
+
+  plotInjectionLine(data) {
+    const self = this;
+    const injectionData = data.map(d => ({ time: d.time, injection: d.injection }));
+
+    // Create a line generator
+    const line = d3.line()
+        .x(d => self.xScale(d.time))
+        .y(d => self.yScale(d.injection));
+
+    // Append the line to the panel
+    const lineElement = self.panel.append('path')
+        .datum(injectionData)
+        .attr('class', 'injection-line')
+        .attr('d', line)
+        .attr('fill', 'none') // No fill for the line
+        .attr('stroke', '#b1a4ff') // Color of the line
+        .attr('stroke-width', 1.5) // Width of the line
+        .style('opacity', 0); // Set initial opacity to 0
+
+    // Use setTimeout to delay the fade-in effect
+    setTimeout(() => {
+        lineElement.transition() // Start the transition
+            .duration(2000) // Duration of the fade-in effect
+            .style('opacity', 1); // Fade to full opacity
+    }, 2000); // Delay of 5000 milliseconds (5 seconds)    
   }
 
   setYLabel() {
@@ -860,13 +871,11 @@ class Graph {
 
   submitFunction(certainty=1) { // Define the submitFunction method
     const fileId = this.networkManager.fileId;
-    const ViewIndex = this.networkManager.ViewIndex;
     console.log("Submit file", fileId, "with certainty", certainty);
 
     // Prepare data for the POST request
     const postData = {
         file_id_user: parseInt(fileId),
-        view_index_user: parseInt(ViewIndex),
         time: this.spikeLines.getClickLineXPositions(),
         certainty: certainty,
     };

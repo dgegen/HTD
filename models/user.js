@@ -28,17 +28,11 @@ module.exports = (sequelize) => {
         allowNull: false,
         comment: 'Password for the user',
       },
-      file_id: {
+      view_index: {
         type: DataTypes.INTEGER,
         allowNull: false,
         defaultValue: 0,
         comment: 'ID of the file the user is currently working on',
-      },
-      init_file_id: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-        defaultValue: 0,
-        comment: 'ID of the file first server to the user',
       },
       classified_file_count: {
         type: DataTypes.INTEGER.UNSIGNED,

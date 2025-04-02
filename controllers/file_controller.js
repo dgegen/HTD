@@ -7,9 +7,9 @@ const { verifyToken } = require("../utils/tokenUtils");
 
 const dataFolderPath = path.join(__dirname, "..", "data");
 
-async function getFileId(user_id) {
+async function getViewIndex(user_id) {
   const user = await models.User.findOne({
-    attributes: ["id", "file_id"],
+    attributes: ["id", "view_index"],
     where: { id: user_id },
   });
 
@@ -17,7 +17,7 @@ async function getFileId(user_id) {
     throw { status: 404, message: "User not found" };
   }
 
-  return user.get("file_id");
+  return user.get("view_index");
 }
 
 function errorHandler(err, req, res, next) {
@@ -27,15 +27,39 @@ function errorHandler(err, req, res, next) {
   res.status(status).json({ error: err.message || "Internal Server Error" });
 }
 
-const verifyFileIdToken = (token) => {
+const verifyViewIndexToken = (token) => {
   const decodedToken = verifyToken(token);
   if (decodedToken) {
-    return decodedToken.fileId;
+    return decodedToken.viewIndex;
   } else {
     return null;
   }
 };
 
+async function getUserFileId(user_id, view_index, fileType) {
+  const userViewEntry = await models.UserViews.findOne({
+    where: {
+      user_id: user_id,
+      view_order: view_index,
+    },
+  });
+
+  if (userViewEntry) {
+    const file_id_lookup = userViewEntry.file_id;
+    console.log(
+      "Resolved to file_id:", file_id_lookup, "from user_id:", user_id, "and view_index:", view_index,
+      "for fileType:", fileType
+    );
+    return file_id_lookup;
+  } else {
+    console.log("No entry found for user_id:", user_id, "and view_index:", view_index);
+    return null;
+  }
+}
+
+/**
+ * Asynchronously retrieves a file based on the user's request and sends it as a response.
+ */
 async function getFileAndSendResponse(req, res, fileType) {
   if (!req.signedCookies || !req.signedCookies.user_id) {
     // Add ip adress of the user
@@ -49,25 +73,27 @@ async function getFileAndSendResponse(req, res, fileType) {
   // const user_id = req.cookies.user_id;
 
   try {
-    let file_id;
+    let view_index;
     if (token) {
-      file_id = verifyFileIdToken(token);
+      view_index = verifyViewIndexToken(token);
+    }
+    if (!view_index) {
+      view_index = await getViewIndex(user_id);
     }
 
-    if (!file_id) {
-      file_id = await getFileId(user_id);
-    }
-
-    const filePath = path.join(dataFolderPath, `${fileType}_${file_id}.csv.zlib`);
+    const file_id_lookup = await getUserFileId(user_id, view_index, fileType);
+    const filePath = path.join(dataFolderPath, `${fileType}_${file_id_lookup}.csv.zlib`);
 
     console.log(
-      `User ${user_id} requested ${fileType} ${file_id} ${token ? "with token" : "without token"
+      `User ${user_id} requested ${fileType} ${file_id_lookup} ${token ? "with token" : "without token"
       }.`
     );
-    res.setHeader("file_id", file_id);
+    res.setHeader("file_id", file_id_lookup);
+    res.setHeader("view_index", view_index);
     res.sendFile(filePath);
   } catch (error) {
     res.status(error.status || 500).json({ error: error.message || "Internal Server Error" });
+    console.error("Error sending file:", error);
   }
 }
 

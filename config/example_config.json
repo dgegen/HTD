@@ -6,7 +6,8 @@
     "host": "127.0.0.1",
     "dialect": "mysql",
     "secretTokenKey": "some_secret_key",
-    "max_file_id": 50
+    "max_file_id": 50,
+    "num_tutorial_files": 10
   },
   "test": {
     "username": "myUsername",
@@ -15,7 +16,8 @@
     "host": "127.0.0.1",
     "dialect": "mysql",
     "secretTokenKey": "some_secret_key",
-    "max_file_id": 50
+    "max_file_id": 50,
+    "num_tutorial_files": 10
   },
   "production": {
     "username": "myUsername",
@@ -24,6 +26,7 @@
     "host": "127.0.0.1",
     "dialect": "mysql",
     "secretTokenKey": "some_secret_key",
-    "max_file_id": 50
+    "max_file_id": 50,
+    "num_tutorial_files": 50
   }
 }

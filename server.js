@@ -11,6 +11,7 @@ const HomeRoutes = require("./controllers/home_controller");
 const ClassifyRoutes = require("./controllers/classify_controller");
 const postController = require("./controllers/post_controller");
 const fileController = require("./controllers/file_controller");
+const tutorialFileController = require("./controllers/tutorial_file_controller");
 const authenticate = require("./middleware/authenticate");
 // const profileController = require('./controllers/profile_controller');
 
@@ -46,6 +47,7 @@ app.use("/", HomeRoutes);
 app.use("/", AccountRoutes);
 app.use("/", fileController);
 app.use("/", postController);
+app.use("/", tutorialFileController);
 app.use("/", authenticate, ClassifyRoutes);
 
 app.get("/login", (req, res) => {

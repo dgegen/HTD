@@ -2,9 +2,9 @@
 const jwt = require("jsonwebtoken");
 const config = require("../config/config.js");
 
-function generateDownloadToken(fileId) {
+function generateDownloadToken(viewIndex) {
   const secretTokenKey = config.secretTokenKey;
-  const token = jwt.sign({ fileId }, secretTokenKey, { expiresIn: "1m" });
+  const token = jwt.sign({ viewIndex }, secretTokenKey, { expiresIn: "1m" });
   return token;
 }
 

@@ -2,7 +2,7 @@
 const { verifyToken } = require("./tokenUtils");
 
 function isAuthenticated(req) {
-  console.log("Authenticate");
+  // console.log("Authenticate");
   // It is not necessary to use signed cookies to store a jwt token
   // if (!req.signedCookies || !req.signedCookies.token) {
   //   console.log("No token")
@@ -26,6 +26,9 @@ function isAuthenticated(req) {
     return false;
   }
 
+
+  console.debug("Authenticated:", String(decodedToken.userId) === req.signedCookies.user_id);
+  
   return String(decodedToken.userId) === req.signedCookies.user_id;
   // return String(decodedToken.userId) === req.cookies.user_id;
   // user_id size 58
