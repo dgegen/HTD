@@ -15,9 +15,9 @@ class NetworkManager {
     const parsedData = d3.csvParse(csvText, function (d) {
       return {
         time: +d.time,
-        flux: +d.flux,
-        flux_err: +d.flux_err,
-        fwhm: +d.fwhm,
+        flux: d.flux === "" ? NaN : +d.flux,
+        flux_err: d.flux_err === "" ? NaN : +d.flux_err,
+        fwhm: d.fwhm === "" ? NaN : +d.fwhm,
         // color: d.color,
         injection: +d.injection,
         // pixel_shift: +d.pixel_shift
