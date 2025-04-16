@@ -72,7 +72,6 @@ class NetworkManager {
       this.models = newModels;
       console.debug('Data:', this.data);
       console.debug('Models:', this.models);
-      this.fileIndex++; // Increment the fileIndex after fetching
     });
   }
 
