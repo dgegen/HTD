@@ -84,11 +84,13 @@ class MySQLDatabase:
         username: str,
         password: Optional[str] = None,
         host: str = "localhost",
+        port: int = 3306,
     ):
         self.database = database
         self.username = username
         self.password = password
         self.host = host
+        self.port = port
         self.engine = self._create_engine()
 
     def query_to_dataframe(self, query: str) -> Optional[pd.DataFrame]:
@@ -241,7 +243,7 @@ class MySQLDatabase:
         url = (
             f"mysql+mysqlconnector://{self.username}"
             + (f":{self.password}" if self.password else "")
-            + f"@{self.host}/{self.database}"
+            + f"@{self.host}:{self.port}/{self.database}"
         )
         return url
 

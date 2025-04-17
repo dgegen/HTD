@@ -790,7 +790,7 @@ class Graph {
     const minXValue = d3.min(data, d => d.time);
     const maxXValue = d3.max(data, d => d.time);
     const bufferX = (maxXValue - minXValue) / 40;
-    const modelBuffer = (maxXValue - minXValue) / 12;
+    const modelBuffer = (maxXValue - minXValue) / 7;
     const modelTimeArray = d3.range(minXValue - bufferX/2 - modelBuffer, minXValue - bufferX/2, (modelBuffer / models.length));
     const xScale = d3.scaleLinear()
       .domain([minXValue - bufferX - modelBuffer, maxXValue + bufferX])
