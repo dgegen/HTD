@@ -310,9 +310,10 @@ class MySQLDatabase:
             raise ValueError("ConfigLoader instance is None")
         if not config_loader.config:
             raise ValueError("ConfigLoader config is empty")
-        return cls(
-            database=config_loader.get("database"),
-            username=config_loader.get("username"),
-            password=config_loader.get("password"),
-            host=config_loader.get("host"),
-        )
+
+        return cls(**{
+            item: config_loader.get(item)
+            for item in ["database", "username", "password", "host", "port"]
+            if item in config_loader.config
+        })
+
