@@ -7,7 +7,6 @@ from pathlib import Path
 
 import httpx
 import pandas as pd
-import yaml
 
 logging.basicConfig(
     level=logging.INFO,
@@ -120,15 +119,6 @@ class APIClient:
         decompressed_data = zlib.decompress(data_response.content)
         return pd.read_csv(io.BytesIO(decompressed_data))
 
-    @classmethod
-    def from_yaml(cls, yaml_file):
-        with open(yaml_file, "r") as file:
-            config = yaml.safe_load(file)
-            return cls(
-                username=config["username"],
-                password=config["password"],
-            )
-
 
 def parse_args():
     import argparse
@@ -139,6 +129,12 @@ def parse_args():
         type=str,
         default=Path(__file__).parent / "output/users.csv",
         help="Path to the users table.",
+    )
+    parser.add_argument(
+        "--base_url",
+        type=str,
+        default="http://localhost:8000/",
+        help="Base URL of the API.",
     )
     parser.add_argument(
         "--speed",
@@ -163,6 +159,7 @@ def parse_args():
 
 async def main(
     user_table_path,
+    base_url,
     n_classifications,
     speed,
     randomize_speed,
@@ -181,7 +178,7 @@ async def main(
                 f"{username}: classifies with a randomized speed of {speed:.2f} seconds."
             )
 
-        client = APIClient(username, password)
+        client = APIClient(username, password, base_url=base_url)
         task = client.classify(
             n_classifications,
             login=True,
@@ -200,5 +197,6 @@ if __name__ == "__main__":
             n_classifications=args.n_classifications,
             speed=args.speed,
             randomize_speed=args.randomize_speed,
+            base_url=args.base_url,
         )
     )
