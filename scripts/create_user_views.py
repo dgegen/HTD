@@ -14,7 +14,7 @@ logging.basicConfig(
 
 def count_files() -> int:
     data_dir = Path(__file__).parent.parent / "data"
-    return len(list(data_dir.glob("file*.zlib")))
+    return len(list(data_dir.glob("file*.zlib"))) // 2
 
 
 def create_user_view_mapping(
@@ -82,8 +82,11 @@ def create_user_view_mapping_with_and_without_transits(
 
     # Pairwise shuffle between df and transit_df to break regularity
     mask = np.random.rand(len(df)) < 0.5
-    df.iloc[mask], transit_df.iloc[mask] = transit_df.iloc[mask].copy(), df.iloc[mask].copy()
-    
+    df.iloc[mask], transit_df.iloc[mask] = (
+        transit_df.iloc[mask].copy(),
+        df.iloc[mask].copy(),
+    )
+
     combined_df = pd.concat([df, transit_df], ignore_index=True)
     combined_df.iloc[0::2, :] = df
     combined_df.iloc[1::2, :] = transit_df
@@ -91,6 +94,13 @@ def create_user_view_mapping_with_and_without_transits(
     combined_df["view_order"] = combined_df.groupby("user_id").cumcount() + 1
 
     return combined_df
+
+
+def insert_dataframe_into_database(db: MySQLDatabase, records):
+    records = [tuple(row) for row in records.to_numpy().astype(int).tolist()]
+    db.insert_records(
+        "UserViews", records, columns=["user_id", "file_id", "view_order"]
+    )
 
 
 def insert_user_image_views(
@@ -103,15 +113,11 @@ def insert_user_image_views(
     else:
         records = create_user_view_mapping(db, n_images, n_views)
 
-    records = [tuple(row) for row in records.to_numpy().astype(int).tolist()]
-
-    db.insert_records(
-        "UserViews", records, columns=["user_id", "file_id", "view_order"]
-    )
+    insert_dataframe_to_database(db, records)
 
 
 def parse_args():
-    """ Parse command line arguments.
+    """Parse command line arguments.
     Example
     -------
     >>> python create_user_views.py --n_views 10 --delay 3 --n_images 20 --mode production
