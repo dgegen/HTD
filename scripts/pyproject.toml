@@ -9,7 +9,9 @@ dependencies = [
     "bcrypt",
     "mysql-connector-python",
     "pandas",
-    "sqlalchemy"
+    "sqlalchemy",
+    "httpx",
+    "pyaml",
 ]
 
 [project.optional-dependencies]

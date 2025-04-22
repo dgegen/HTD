@@ -113,7 +113,7 @@ def insert_user_image_views(
     else:
         records = create_user_view_mapping(db, n_images, n_views)
 
-    insert_dataframe_to_database(db, records)
+    insert_dataframe_into_database(db, records)
 
 
 def parse_args():
