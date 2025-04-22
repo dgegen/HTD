@@ -9,6 +9,7 @@ from sqlalchemy import Engine, create_engine
 
 PROJECT_BASE = Path(__file__).parent.parent
 
+
 class ConfigLoader:
     def __init__(
         self, mode: Literal["development", "test", "production"] = "development"
@@ -144,7 +145,9 @@ class MySQLDatabase:
         # If columns are provided, ensure they match the number of record fields
         if columns:
             if len(columns) != num_columns:
-                logging.error("Number of columns does not match number of record fields.")
+                logging.error(
+                    "Number of columns does not match number of record fields."
+                )
                 return
             column_names = ", ".join(columns)
         else:
@@ -178,7 +181,7 @@ class MySQLDatabase:
         finally:
             self._close_cursor(cursor)
             self._close_connection(connection)
-        
+
         return success
 
     def insert_records(
@@ -265,15 +268,19 @@ class MySQLDatabase:
             for table in tables:
                 cursor.execute(f"DROP TABLE IF EXISTS {table}")
 
-            database_structure_path = PROJECT_BASE / "migrations" / "database_structure.sql"
+            database_structure_path = (
+                PROJECT_BASE / "migrations" / "database_structure.sql"
+            )
             if not database_structure_path.exists():
-                raise FileNotFoundError(f"SQL file not found: {database_structure_path}")
+                raise FileNotFoundError(
+                    f"SQL file not found: {database_structure_path}"
+                )
 
-            with open(database_structure_path, 'r') as file:
+            with open(database_structure_path, "r") as file:
                 sql_script = file.read()
                 for result in cursor.execute(sql_script, multi=True):
                     pass  # Process each result to avoid "commands out of sync" error
-                        
+
             connection.commit()
             logging.info("Database reset and structure recreated.")
         except mysql.connector.Error as error:
@@ -311,9 +318,10 @@ class MySQLDatabase:
         if not config_loader.config:
             raise ValueError("ConfigLoader config is empty")
 
-        return cls(**{
-            item: config_loader.get(item)
-            for item in ["database", "username", "password", "host", "port"]
-            if item in config_loader.config
-        })
-
+        return cls(
+            **{
+                item: config_loader.get(item)
+                for item in ["database", "username", "password", "host", "port"]
+                if item in config_loader.config
+            }
+        )

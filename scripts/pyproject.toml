@@ -11,3 +11,6 @@ dependencies = [
     "pandas",
     "sqlalchemy"
 ]
+
+[project.optional-dependencies]
+dev = ["ruff", "nbstripout-fast"]

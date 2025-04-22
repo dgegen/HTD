@@ -15,7 +15,7 @@ def check_for_existing_users(db: MySQLDatabase):
     if current_user_table is None:
         raise ValueError("Error loading the users table.")
     elif current_user_table.shape[0] > 0:
-        logging.warning("Warning: The users table is not empty..")
+        logging.warning(f"Warning: The users table is not empty: {current_user_table}.")
 
 
 def generate_users(
@@ -150,3 +150,41 @@ class UserHandoutGenerator:
             db, num_useres=num_useres, password_length=password_length
         )
         return cls(users=users, **kwargs)
+
+
+def parse_args():
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Generate users and user handouts.")
+    parser.add_argument(
+        "--num_users", type=int, default=10, help="Number of users to generate."
+    )
+    parser.add_argument(
+        "--password_length",
+        type=int,
+        default=5,
+        help="Length of the generated passwords.",
+    )
+    parser.add_argument(
+        "--output_dir", type=str, default="", help="Directory to save handouts."
+    )
+    parser.add_argument(
+        "--mode",
+        type=str,
+        default="development",
+        help="Config mode (development/production).",
+    )
+    return parser.parse_args()
+
+
+if __name__ == "__main__":
+    args = parse_args()
+    db = MySQLDatabase.from_config(mode=args.mode)
+    users = generate_users(
+        db=db, num_useres=args.num_users, password_length=args.password_length
+    )
+    user_handout_generator = UserHandoutGenerator(
+        users=users,
+        output_dir=Path(args.output_dir),
+    )
+    user_handout_generator.save_handouts_in_combined_rtf()
