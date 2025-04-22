@@ -179,7 +179,7 @@ class GraphDimensions {
 
 
 class SpikeLines {
-  constructor(svg, xScale, lcYScale, graphDimensions, buffer) {
+  constructor(svg, xScale, lcYScale, graphDimensions, buffer, maxSpikes = NaN) {
     this.svg = svg;
     this.xScale = xScale;
     this.lcYScale = lcYScale;
@@ -187,6 +187,7 @@ class SpikeLines {
     this.clickLineXPositions = [];
     this.spikeId = 0;
     this.buffer = buffer;
+    this.maxSpikes = maxSpikes;
     this.initializeSpikeLineInteractions();
   }
 
@@ -240,6 +241,19 @@ class SpikeLines {
       .attr("y1", mousey + crossSize)
       .attr("x2", mousex + crossSize)
       .attr("y2", mousey - crossSize);
+
+    if (!isNaN(this.maxSpikes) && this.clickLineXPositions.length >= this.maxSpikes) {
+      // Remove the oldest spike line
+      console.debug("Removing the oldest spike line", "#click-line-group-" + String(this.spikeId - this.maxSpikes));
+      const oldestSpikeGroup = svg.select("#click-line-group" + String(this.spikeId - this.maxSpikes)); // Updated ID format
+      if (!oldestSpikeGroup.empty()) {
+        oldestSpikeGroup.remove();
+      }
+      this.clickLineXPositions.shift();
+    }
+  
+    // Add the new spike position
+    this.clickLineXPositions.push(self.xScale.invert(mousex));  
   }
 
   initializeSpikeLineInteractions() {
@@ -820,7 +834,7 @@ class Graph {
     // pixelShiftPanel.setXLabel("Time [days]");
   
     // add spike lines (vertical crosshair line)
-    this.spikeLines = new SpikeLines(svg, xScale, lcPanel.yScale, graphDimensions, bufferX + modelBuffer);
+    this.spikeLines = new SpikeLines(svg, xScale, lcPanel.yScale, graphDimensions, bufferX + modelBuffer, 1);
     console.debug("spikeLines", this.spikeLines);
   }
   
