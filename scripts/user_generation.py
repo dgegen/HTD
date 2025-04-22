@@ -9,6 +9,11 @@ import bcrypt
 import pandas as pd
 from mysql_database import MySQLDatabase
 
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+)
+
 
 def check_for_existing_users(db: MySQLDatabase):
     current_user_table = db.query_to_dataframe("SELECT * FROM users")
@@ -55,6 +60,7 @@ class UserHandoutGenerator:
         self.width = width
         self.handouts = self.generate_handouts()
         self.output_dir = Path.cwd() if output_dir is None else output_dir
+        self.output_dir.mkdir(parents=True, exist_ok=True)
 
     def generate_handouts(self) -> dict:
         """Generates handouts for each user."""
@@ -166,7 +172,10 @@ def parse_args():
         help="Length of the generated passwords.",
     )
     parser.add_argument(
-        "--output_dir", type=str, default="", help="Directory to save handouts."
+        "--output_dir",
+        type=str,
+        default=Path(__file__).parent / "output",
+        help="Directory to save handouts.",
     )
     parser.add_argument(
         "--mode",
@@ -180,6 +189,9 @@ def parse_args():
 if __name__ == "__main__":
     args = parse_args()
     db = MySQLDatabase.from_config(mode=args.mode)
+    logging.info(
+        f"Generating {args.num_users} users with password length {args.password_length}."
+    )
     users = generate_users(
         db=db, num_useres=args.num_users, password_length=args.password_length
     )
@@ -188,3 +200,8 @@ if __name__ == "__main__":
         output_dir=Path(args.output_dir),
     )
     user_handout_generator.save_handouts_in_combined_rtf()
+    # users to json
+    users.to_csv(
+        Path(args.output_dir) / "users.csv",
+        index=False,
+    )

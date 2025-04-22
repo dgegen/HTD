@@ -1,8 +1,20 @@
+import logging
+from pathlib import Path
 from typing import Optional
 
 import numpy as np
 import pandas as pd
 from mysql_database import MySQLDatabase
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+)
+
+
+def count_files() -> int:
+    data_dir = Path(__file__).parent.parent / "data"
+    return len(list(data_dir.glob("file*.zlib")))
 
 
 def create_user_view_mapping(
@@ -68,6 +80,10 @@ def create_user_view_mapping_with_and_without_transits(
     transit_df["file_id"] += n_images
     transit_df = transit_df.reindex(index=np.roll(df.index, -delay))
 
+    # Pairwise shuffle between df and transit_df to break regularity
+    mask = np.random.rand(len(df)) < 0.5
+    df.iloc[mask], transit_df.iloc[mask] = transit_df.iloc[mask].copy(), df.iloc[mask].copy()
+    
     combined_df = pd.concat([df, transit_df], ignore_index=True)
     combined_df.iloc[0::2, :] = df
     combined_df.iloc[1::2, :] = transit_df
@@ -94,6 +110,43 @@ def insert_user_image_views(
     )
 
 
+def parse_args():
+    """ Parse command line arguments.
+    Example
+    -------
+    >>> python create_user_views.py --n_views 10 --delay 3 --n_images 20 --mode production
+    """
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        description="Create user image views for classification tasks."
+    )
+    parser.add_argument(
+        "--n_views", type=int, default=5, help="Number of views per image."
+    )
+    parser.add_argument(
+        "--delay", type=int, default=5, help="Delay for transit images."
+    )
+    parser.add_argument(
+        "--n_images", type=int, default=count_files(), help="Number of images."
+    )
+    parser.add_argument(
+        "--mode",
+        type=str,
+        default="development",
+        help="Config mode (development/production).",
+    )
+
+    return parser.parse_args()
+
+
 if __name__ == "__main__":
-    db = MySQLDatabase.from_config(mode="development")
-    insert_user_image_views(db, n_images=25, n_views=5, delay=5)
+    args = parse_args()
+    logging.info(
+        f"Creating user image views with {args.n_images} images, {args.n_views} views per image, "
+        f"and a delay of {args.delay}."
+    )
+    db = MySQLDatabase.from_config(mode=args.mode)
+    insert_user_image_views(
+        db, n_images=args.n_images, n_views=args.n_views, delay=args.delay
+    )

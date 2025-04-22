@@ -234,7 +234,8 @@ class MySQLDatabase:
     def fetch_user_ids(self) -> List[int]:
         """Fetches all user IDs from the users table."""
         results = self.query("SELECT id FROM users")
-        return [row[0] for row in results] if results else []
+        # Sort numerically
+        return sorted([row[0] for row in results]) if results else []
 
     def _create_engine(self) -> Engine:
         """Constructs the SQLAlchemy engine for MySQL."""
