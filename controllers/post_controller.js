@@ -9,7 +9,7 @@ const config = require("../config/config.js");
 const max_file_id = config.max_file_id;
 
 // Handle POST requests to '/post'
-function handlePostRequest(user_id, file_id_user, view_index_user, time, certainty) {
+function handlePostRequest(user_id, file_id_user, view_index_user, time, certainty,res) {
   return new Promise(async (resolve, reject) => {
     console.log("handlePostRequest", { user_id, file_id_user, view_index_user, time, certainty });
     try {
@@ -60,12 +60,20 @@ function handlePostRequest(user_id, file_id_user, view_index_user, time, certain
           });
         }
       }
+      const updated_view_index = (view_index + 1);
 
-      const updated_view_index = (view_index + 1) % max_file_id;
+      if (updated_view_index === max_file_id+1) {
+        await updateUserViewIndex(user_id, 1);
+
+        console.log("Resetting view index to 1");
+        res.redirect("/logout");
+        return;
+      }
+      else{
       await updateUserViewIndex(user_id, updated_view_index);
 
       console.log(`User ${user_id}'s posting sucessful. New file id is ${updated_view_index}.`);
-      resolve(updated_view_index);
+      resolve(updated_view_index);}
     } catch (err) {
       console.error("Error in post:", err);
       reject(err);
@@ -125,7 +133,7 @@ router.post("/post/", async (req, res) => {
   // console.log("POST request recieved at /post got", { file_id_user, time });
 
   try {
-    const newViewIndex = await handlePostRequest(user_id, file_id_user, view_index_user, time, certainty);
+    const newViewIndex = await handlePostRequest(user_id, file_id_user, view_index_user, time, certainty,res);
     const downloadToken = generateDownloadToken(newViewIndex);
 
     res.status(201).json({ message: "Dataset created successfully", downloadToken });

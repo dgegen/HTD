@@ -18,6 +18,7 @@ class NetworkManager {
         flux_err: d.flux_err === "" ? NaN : +d.flux_err,
         fwhm: d.fwhm === "" ? NaN : +d.fwhm,
         color: d.color,
+        prob: +d.prob
         // pixel_shift: +d.pixel_shift
       };
     });
@@ -95,6 +96,10 @@ class NetworkManager {
       body: JSON.stringify(postData),
     })
       .then(async (response) => {
+        if (response.redirected) {//reached end of batch ->logout
+          window.location.href = response.url;
+          return; 
+        }
         if (!response.ok) {
           throw new Error(`Network response was not ok, status: ${response.status}`);
         }
@@ -123,7 +128,7 @@ class GraphDimensions {
     this.innerHeightPlot = 0;
     this.interPanelPadding = 20;
     this.panelHeightFractions = [0.8];
-    this.panelNames = ["flux"];
+    this.panelNames = ["flux", "prob"];
     this.panelHeights = [];
     this.lcPanelHeight = 0;
     this.fwhmPanelHeight = 0;
@@ -411,12 +416,15 @@ class Panel {
       yScale = null,
       } = options;
     const panelIndex = graphDimensions.panelNames.indexOf(panelName);
-    const translateY = graphDimensions.panelTops[panelIndex];
+    
+    const totalHeight = graphDimensions.panelHeights[0];// total height, assigned by graphdimensions
+    this.panelHeight = panelName === "flux" ? totalHeight * 0.75 : totalHeight * 0.25; //ensures the flux gets 75% of the space, the probability 25%
+    const translateY = panelIndex === 0 ? 0 : totalHeight * 0.75; // Position panels correctly
       
     this.graphDimensions = graphDimensions;
     this.panel = svg.append("g").attr("transform", `translate(0, ${translateY})`);
     this.panelIndex = panelIndex;
-    this.panelHeight = graphDimensions.panelHeights[this.panelIndex];
+    
     this.panelName = panelName;
     this.yDataKey = yDataKey;
     this.xScale = xScale;
@@ -445,13 +453,17 @@ class Panel {
 
    this.setYLabel();
 
-    this.plotDataWithBins(data, 0.02);
+
+      this.plotDataWithBins(data, 0.02     ); //adjust here the bin-size of the (black) binned points to the needs of the data
   };
 
 
   plotDataWithBins(data, bin_duration=0.01) {
     this.plotErrorBar(data, "data");
+    if (this.yDataKey == "flux"){
       this.plotErrorBar(binData(data, bin_duration, this.yDataKey), "bin");
+    }
+
   }
 
 
@@ -480,8 +492,13 @@ class Panel {
     // Make sure, the data points end up within the yScale image range
       const filteredData = filterDataByYScaleDomain(data, this.yScale, yColumnName);
     
-    // Create circles in the top panel
-    this.plotScatter(filteredData, class_name, radius);
+    let color="black";
+    if (this.yDataKey =="prob"){ //to plot it red for Probability
+        color="red";
+        console.log("entered if-loop")
+    }
+    // Create circles in the top panel, creates the dots
+    this.plotScatter(filteredData, class_name, radius, color);
 
     // Create vertical bars for the error in the top panel
     if ((yColumnName + "_err") in data[0]){
@@ -680,7 +697,7 @@ class Panel {
   }
 
 
-  plotScatter(data, class_name="bin", radius=null){
+  plotScatter(data, class_name="bin", radius=null, color="black") {
     const self = this;
     if (class_name == "bin") {
         radius = radius ?? 3;
@@ -694,10 +711,11 @@ class Panel {
      self.panel.selectAll("." + class_name + "-circle")
          .data(data)
          .enter().append("circle")
-        .attr("class", class_name + "-circle")
+         .attr("class", class_name + "-circle"+ "-" + this.panelIndex)
          .attr("cx", d => self.xScale(d.time))
         .attr("cy", d => self.yScale(d[self.yDataKey]))
-        .attr("r", radius);
+         .attr("r", radius)
+         .attr("fill",color);
   }
 
   appendModelLinePlot(models, modelTimeArray) {
@@ -726,13 +744,13 @@ class Panel {
     if (column_name == "flux") {
       // to accommodate errorbars
       const fluxValues = data.map(d => d[column_name] - d['flux_err'])
-        .concat(data.map(d => d[column_name] + d['flux_err'])).filter(value => !isNaN(value));
+        .concat(data.map(d => d[column_name] + d['flux_err']));
       minYValue = d3.min(fluxValues);
       maxYValue = d3.max(fluxValues);
       // minYValue = d3.quantile(fluxValues, 0.01);
       // maxYValue = d3.quantile(fluxValues, 0.99);
     } else {
-      const columnValues = data.map(d => d[column_name]).filter(value => !isNaN(value));
+      const columnValues = data.map(d => d[column_name]);
       minYValue = d3.min(columnValues);
       maxYValue = d3.max(columnValues);
       // minYValue = d3.quantile(columnValues, 0.01);
@@ -751,6 +769,13 @@ class Panel {
 
 class Graph {
   constructor(containerId="scatter-plot", networkManager=null) {
+  // const redirectedStatus = sessionStorage.getItem("redirectedAfterWaiting");
+
+  //   if (redirectedStatus === "pending") {
+  //     sessionStorage.setItem("redirectedAfterWaiting", "done");
+  //     window.location.reload();
+  //     return; 
+  //   }
     this.containerId = containerId;
     this.networkManager = ! networkManager ? new NetworkManager() : networkManager;
     this.dimensions = new GraphDimensions(`#${this.containerId}`);
@@ -769,6 +794,7 @@ class Graph {
     window.addEventListener('resize', this.adjustGraphOnResize);
 
     console.log("Initializing graph.");
+    console.log("got into the NNshow file");
     this.initialize().then(() => {
       console.debug("Initialization of graph completed");
       // Do any other initialization tasks here
@@ -812,17 +838,18 @@ class Graph {
   
   
     // Create the LightCurve panel
-    let lcPanel = new Panel(svg, graphDimensions, data, 'flux', {xAxis, xScale, 'yLabel': 'Flux', plot: false, xAxisVisibility: "visible"});
-  
+    let lcPanel = new Panel(svg, graphDimensions, data, 'flux', { xAxis, xScale, 'yLabel': 'Flux', plot: false, xAxisVisibility:"hidden" });
     // Adapt the yScale to accommodate the models
     adaptLcYScale(models, lcPanel.yScale);
   
     lcPanel.PlotPanel(data);
     lcPanel.appendModelLinePlot(models, modelTimeArray);
+    let probpanel = new Panel(svg, graphDimensions, data, 'prob', { xAxis, xScale, 'yLabel': 'Probability', plot: false , xAxisVisibility:"visible"});
+    probpanel.PlotPanel(data);
     // lcPanel.plotVarianceBars(data, 'fwhm', 40);
     // lcPanel.plotColorBars(data, 'fwhm', 40);
-    lcPanel.setXLabel("Time [days]");
-  
+    probpanel.setXLabel("Time [days]");
+    //lcPanel.setXLabel("Time [days]");
     // Plot the fwhm panel
     // let  fwhmPanel = new Panel(svg, graphDimensions, data, 'fwhm', {xAxis, xScale, 'yLabel': 'FWHM'});
     // fwhmPanel.plotVarianceBars(data, 'fwhm', 40);
@@ -897,6 +924,22 @@ class Graph {
         this.networkManager.getNewData(token)
         .then(() => {
           console.log("Successfully fetched data", this.networkManager.fileId);
+          console.log(this.networkManager.fileId);
+          // if (sessionStorage.getItem("redirectedAfterWaiting") === "pending") {
+          //   sessionStorage.setItem("redirectedAfterWaiting", "done");
+          //   sessionStorage.removeItem("redirectedForFile");
+          //   location.reload();
+          //   return;
+          // }
+          
+          // Only redirect once for each 5th file
+          // if (this.networkManager.fileId % 5 === 0 &&
+          //     sessionStorage.getItem("redirectedForFile") !== this.networkManager.fileId.toString()) {
+          //   sessionStorage.setItem("redirectedAfterWaiting", "pending");
+          //   sessionStorage.setItem("redirectedForFile", this.networkManager.fileId.toString());
+          //   location.href = "/classify/waiting";
+          //   return;
+          // }
           this.erasePreviousGraph();
           this.plot();
           if (window.resetTimer){
