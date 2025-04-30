@@ -105,6 +105,10 @@ class NetworkManager {
         }
   
         const responseData = await response.json();
+        if (responseData.logout) {
+          window.location.href = "/logout";
+          return new Promise(() => {}); // prevent further promise chain execution
+        }
         const downloadToken = responseData.downloadToken;
   
         return downloadToken;
@@ -769,13 +773,13 @@ class Panel {
 
 class Graph {
   constructor(containerId="scatter-plot", networkManager=null) {
-  // const redirectedStatus = sessionStorage.getItem("redirectedAfterWaiting");
+  const redirectedStatus = sessionStorage.getItem("redirectedAfterWaiting");
 
-  //   if (redirectedStatus === "pending") {
-  //     sessionStorage.setItem("redirectedAfterWaiting", "done");
-  //     window.location.reload();
-  //     return; 
-  //   }
+    if (redirectedStatus === "pending") {
+      sessionStorage.setItem("redirectedAfterWaiting", "done");
+      window.location.reload();
+      return; 
+    }
     this.containerId = containerId;
     this.networkManager = ! networkManager ? new NetworkManager() : networkManager;
     this.dimensions = new GraphDimensions(`#${this.containerId}`);

@@ -98,8 +98,12 @@ class NetworkManager {
         if (!response.ok) {
           throw new Error(`Network response was not ok, status: ${response.status}`);
         }
-  
+        console.log("successfully posted final data to server");
         const responseData = await response.json();
+        if (responseData.logout) {
+          window.location.href = "/logout";
+          return new Promise(() => {}); // prevent further promise chain execution
+        }
         const downloadToken = responseData.downloadToken;
   
         return downloadToken;
@@ -111,7 +115,6 @@ class NetworkManager {
   }
   
 }
-
 
 class GraphDimensions {
   constructor(svgSelector="#scatter-plot") {

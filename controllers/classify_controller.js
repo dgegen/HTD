@@ -2,6 +2,8 @@
 const express = require("express");
 const user = require("../models/user");
 const router = express.Router();
+const config = require("../config/config.js");
+const nr_users = config.nr_users;
 
 // Route handler for /classify/classify and /classify/dark
 router.get("/classify/:theme?", (req, res) => {
@@ -13,12 +15,14 @@ router.get("/classify/:theme?", (req, res) => {
   }
   const user_id = req.signedCookies.user_id;
   console.log("User ID:", user_id);
-  const nr_users= 4; // This should be replaced with the actual number of users in the database
-  if (user_id < Math.floor(nr_users/2) ){
-  res.render(`classify/${theme}`);
+  if (user_id <= Math.floor(nr_users) ){
+    res.render(`classify/${theme}`);
   } 
   else { //show the Probability panel
     res.render(`classify/${theme}_NNshow`);}
 });
 
+router.get("/waiting", (req, res) => {
+  res.render("classify/waiting");
+});
 module.exports = router;
