@@ -68,9 +68,13 @@ app.get("/login", (req, res) => {
   res.render("login", { error });
 });
 
-const port = process.env.PORT || 8000;
-const hostname = app.get("env") != "development" ? "0.0.0.0" : "localhost";
+if (require.main === module) {
+  const port = process.env.PORT || 8000;
+  const hostname = app.get("env") != "development" ? "0.0.0.0" : "localhost";
 
-app.listen(port, hostname, () => {
-  console.log(`Server is running on port ${port}`);
-});
+  app.listen(port, hostname, () => {
+    console.log(`Server is running on port ${port}`);
+  });
+}
+
+module.exports = app;
