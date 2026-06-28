@@ -755,6 +755,9 @@ class Graph {
     this.networkManager = ! networkManager ? new NetworkManager() : networkManager;
     this.dimensions = new GraphDimensions(`#${this.containerId}`);
     this.spikeLines = null;
+    this.submissionInProgress = false;
+    this.minViewTimeMs = parseInt(document.getElementById('chart-container')?.dataset.minViewTimeMs, 10) || 0;
+    this.fileLoadedAt = null;
 
     this.adjustGraphOnResize = this.adjustGraphOnResize.bind(this);
     // this.plotRefetchAsync = this.plotRefetchAsync.bind(this);
@@ -780,6 +783,7 @@ class Graph {
     try {
       await this.networkManager.getNewData(null);
       this.plot();
+      this.fileLoadedAt = Date.now();
     } catch (error) {
       console.error("Error during data fetching:", error);
     }
@@ -878,6 +882,16 @@ class Graph {
   // }
 
   submitFunction(certainty=1) { // Define the submitFunction method
+    if (this.submissionInProgress) {
+      console.warn("Submission already in progress, ignoring duplicate submit.");
+      return;
+    }
+    if (this.fileLoadedAt !== null && Date.now() - this.fileLoadedAt < this.minViewTimeMs) {
+      console.warn("Minimum view time not yet reached, ignoring submit.");
+      return;
+    }
+    this.submissionInProgress = true;
+
     const fileId = this.networkManager.fileId;
     const ViewIndex = this.networkManager.ViewIndex;
     console.log("Submit file", fileId, "with certainty", certainty);
@@ -899,16 +913,21 @@ class Graph {
           console.log("Successfully fetched data", this.networkManager.fileId);
           this.erasePreviousGraph();
           this.plot();
+          this.fileLoadedAt = Date.now();
           if (window.resetTimer){
               window.resetTimer();
           }
         })
         .catch(error => {
           console.error("Error during data fetching:", error);
+        })
+        .finally(() => {
+          this.submissionInProgress = false;
         });
       })
       .catch(error => {
         console.error("Error during submitFunction:", error);
+        this.submissionInProgress = false;
       });
   }
 }  

@@ -19,7 +19,6 @@ function handleKeyPress(event) {
 function submitWithDelay(value) {
   setTimeout(() => {
     graph.submitFunction(value);
-    submissionAllowed = true; // Allow submission again after delay
   }, 100); // Wait for 100 milliseconds, in case the user clicked at the same time
 }
 

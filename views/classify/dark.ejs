@@ -23,7 +23,7 @@
       <!-- <p id="countdown-text">Time left:</p> -->
       <div id="countdown">10</div>
     </div>    
-    <div id="chart-container" style="margin: 0 auto; text-align: center; width: 90vw; height: 80vh; background-color: #110241; opacity: 0.95;">
+    <div id="chart-container" data-min-view-time-ms="<%= minViewTimeMs %>" style="margin: 0 auto; text-align: center; width: 90vw; height: 80vh; background-color: #110241; opacity: 0.95;">
       <div id="chart" style="padding: 5px;"></div>
 
       <%- include('../partials/classification_ui.ejs') %>
