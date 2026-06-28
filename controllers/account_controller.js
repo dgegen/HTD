@@ -158,7 +158,7 @@ accountRoutes.get("/profile", async function (req, res) {
       res.render("profile/profile", { username: username, topUsers: topUsers })
     } catch (error) {
       console.error("Error fetching top users:", error);
-      res.render("profile/profile", { username: username })
+      res.render("profile/profile", { username: username, topUsers: [] })
     }
   }
 });
