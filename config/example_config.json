@@ -8,7 +8,9 @@
     "secretTokenKey": "some_secret_key",
     "max_file_id": 50,
     "num_tutorial_files": 10,
-    "registrationEnabled": true
+    "registrationEnabled": true,
+    "authRateLimitWindowMs": 900000,
+    "authRateLimitMax": 5
   },
   "test": {
     "username": "myUsername",

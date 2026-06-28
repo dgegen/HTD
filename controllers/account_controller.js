@@ -2,12 +2,21 @@ var express = require("express");
 var models = require("../models");
 var Sequelize = require("sequelize");
 const bcrypt = require("bcrypt");
+const rateLimit = require("express-rate-limit");
 const isAuthenticated = require("../utils/isAuthenticated");
 
 const { generateUserToken } = require("../utils/tokenUtils")
 const config = require("../config/config.js");
 
 var accountRoutes = express.Router();
+
+const authRateLimiter = rateLimit({
+  windowMs: config.authRateLimitWindowMs || 15 * 60 * 1000, // 15 minutes
+  max: config.authRateLimitMax || 5, // attempts per IP per window
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: "Too many attempts. Please try again later.",
+});
 
 accountRoutes.get("/login", (req, res) => {
   const errorMessage = req.query.errors || "";
@@ -21,11 +30,18 @@ accountRoutes.get("/register", function (req, res) {
   res.render("account/register", { errors: "" });
 });
 
-accountRoutes.post("/register", function (req, res) {
+accountRoutes.post("/register", authRateLimiter, function (req, res) {
   if (config.registrationEnabled === false) {
     return res.redirect("/login?errors=Registration is currently disabled.");
   }
   const email = req.body.email || "";
+  const password = req.body.password || "";
+
+  if (password.length < 8 || password.length > 72) {
+    return res.render("account/register", {
+      errors: "Password must be between 8 and 72 characters.",
+    });
+  }
 
   let matched_users_promise;
 
@@ -41,14 +57,14 @@ accountRoutes.post("/register", function (req, res) {
 
   matched_users_promise.then(function (users) {
     if (users.length == 0) {
-      const passwordHash = bcrypt.hashSync(req.body.password, 10);
+      const passwordHash = bcrypt.hashSync(password, 10);
       models.User.create({
         username: req.body.username,
         email: email,
         password: passwordHash,
       }).then(function (user) {
         setCookies(res, user.id);
-        res.redirect("/profile?username=" + req.body.username);
+        res.redirect("/profile?username=" + encodeURIComponent(req.body.username));
       });
     } else {
       res.render("account/register", { errors: "Username or Email already in user" });
@@ -56,10 +72,9 @@ accountRoutes.post("/register", function (req, res) {
   });
 });
 
-accountRoutes.post("/login", function (req, res) {
+accountRoutes.post("/login", authRateLimiter, function (req, res) {
   if (req.body.username == null || req.body.username.length == 0) {
-    handleUnsuccessfulLogin(res, "Please enter a username.");
-    res.redirect("/login");
+    return handleUnsuccessfulLogin(res, "Please enter a username.");
   }
 
   var matched_users_promise = models.User.findOne({
@@ -71,7 +86,7 @@ accountRoutes.post("/login", function (req, res) {
     .then(function (user) {
       if (isValidPassword(user, req.body.password)) {
         setCookies(res, user.id);
-        res.redirect("/profile?username=" + req.body.username);
+        res.redirect("/profile?username=" + encodeURIComponent(req.body.username));
       } else {
         handleUnsuccessfulLogin(res);
       }
@@ -86,8 +101,16 @@ function handleUnsuccessfulLogin(res, errorMessage = "Invalid username or passwo
   res.render("account/login", { error: errorMessage });
 }
 
+// Precomputed bcrypt hash of a fixed dummy string, used to keep comparison
+// timing constant whether or not the username exists.
+const DUMMY_PASSWORD_HASH = bcrypt.hashSync("dummy-password-for-timing", 10);
+
 const isValidPassword = (user, enteredPassword) => {
-  return user && bcrypt.compareSync(enteredPassword, user.password);
+  if (!user) {
+    bcrypt.compareSync(enteredPassword, DUMMY_PASSWORD_HASH);
+    return false;
+  }
+  return bcrypt.compareSync(enteredPassword, user.password);
 };
 
 

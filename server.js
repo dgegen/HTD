@@ -18,6 +18,12 @@ const authenticate = require("./middleware/authenticate");
 
 // Configure express
 var app = express(); // Add this line to create an instance of Express
+
+// Apache reverse proxy sits in front of this app on the same host, so trust
+// the first hop's X-Forwarded-For header to get the real client IP (used by
+// express-rate-limit and req.ip elsewhere).
+app.set("trust proxy", 1);
+
 app.use(favicon(path.join(__dirname, "public/images", "favicon.ico")));
 
 console.log("Starting server in " + app.get("env") + " mode.");
