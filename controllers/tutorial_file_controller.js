@@ -18,7 +18,7 @@ if (!fs.existsSync(TUTORIAL_DATA_DIR_PATH)) {
 /**
  * Asynchronously retrieves a tutorial file based on the user's request and sends it as a response.
  */
-async function getTutorialFileAndSendResponse(req, res) {
+async function getTutorialFileAndSendResponse(req, res, next) {
   const { fileIndex } = req.params; // Extract fileIndex
   let fileType = req.params.fileType;
   console.log("Received request for tutorial file:", fileType, "with index:", fileIndex);
@@ -27,6 +27,10 @@ async function getTutorialFileAndSendResponse(req, res) {
   if (fileType === "data") {
     fileType = "file";
     console.log("File type changed to:", fileType);
+  }
+
+  if (fileType !== "file" && fileType !== "models") {
+    return res.status(400).json({ error: "Invalid file type." });
   }
 
   // Validate the fileIndex and calculate the modulo
@@ -45,16 +49,21 @@ async function getTutorialFileAndSendResponse(req, res) {
 
   res.sendFile(filePath, (err) => {
     if (err) {
-      console.error("Error sending file:", err);
-      res.status(err.status || 500).json({ error: "File not found." });
+      next(err);
     }
   });
 }
 
+function errorHandler(err, req, res, next) {
+  console.error("Error handling tutorial file:", err);
+  res.status(err.status || 500).json({ error: "File not found." });
+}
 
 router.get("/get_tutorial_:fileType/:fileIndex", async (req, res, next) => {
-  await getTutorialFileAndSendResponse(req, res);
+  await getTutorialFileAndSendResponse(req, res, next);
 });
+
+router.use(errorHandler);
 
 
 module.exports = router;

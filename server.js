@@ -34,8 +34,8 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));  // Parse URL for key1=value1&key2=value2 etc.
 app.set("views", path.join(__dirname, "views"));
 
-COOKIE_SECRET = "randomstringsessionsecret";
-app.use(cookieParser(COOKIE_SECRET));
+const cookieSecret = process.env.COOKIE_SECRET || "randomstringsessionsecret";
+app.use(cookieParser(cookieSecret));
 
 app.use(express.static(path.join(__dirname, "public")));
 
