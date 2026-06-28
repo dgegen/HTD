@@ -1,14 +1,15 @@
-var express = require("express");
-var models = require("../models");
-var Sequelize = require("sequelize");
+const express = require("express");
+const models = require("../models");
+const Sequelize = require("sequelize");
 const bcrypt = require("bcrypt");
 const rateLimit = require("express-rate-limit");
 const isAuthenticated = require("../utils/isAuthenticated");
 
-const { generateUserToken } = require("../utils/tokenUtils")
+const { generateUserToken } = require("../utils/tokenUtils");
 const config = require("../config/config.js");
+const seedUserViews = require("../utils/seedUserViews");
 
-var accountRoutes = express.Router();
+const accountRoutes = express.Router();
 
 const authRateLimiter = rateLimit({
   windowMs: config.authRateLimitWindowMs || 15 * 60 * 1000, // 15 minutes
@@ -23,14 +24,14 @@ accountRoutes.get("/login", (req, res) => {
   res.render("account/login", { error: errorMessage });
 });
 
-accountRoutes.get("/register", function (req, res) {
+accountRoutes.get("/register", (req, res) => {
   if (config.registrationEnabled === false) {
     return res.redirect("/login?errors=Registration is currently disabled.");
   }
   res.render("account/register", { errors: "" });
 });
 
-accountRoutes.post("/register", authRateLimiter, function (req, res) {
+accountRoutes.post("/register", authRateLimiter, async (req, res) => {
   if (config.registrationEnabled === false) {
     return res.redirect("/login?errors=Registration is currently disabled.");
   }
@@ -43,58 +44,64 @@ accountRoutes.post("/register", authRateLimiter, function (req, res) {
     });
   }
 
-  let matched_users_promise;
+  try {
+    const queryCond = !email || email.length === 0
+      ? { username: req.body.username }
+      : Sequelize.or({ username: req.body.username }, { email: email });
 
-  if (!email || email.length == 0) {
-    matched_users_promise = models.User.findAll({
-      where: { username: req.body.username },
+    const users = await models.User.findAll({
+      where: queryCond,
     });
-  } else {
-    matched_users_promise = models.User.findAll({
-      where: Sequelize.or({ username: req.body.username }, { email: email }),
-    });
-  }
 
-  matched_users_promise.then(function (users) {
-    if (users.length == 0) {
-      const passwordHash = bcrypt.hashSync(password, 10);
-      models.User.create({
+    if (users.length === 0) {
+      const passwordHash = await bcrypt.hash(password, 10);
+      const user = await models.User.create({
         username: req.body.username,
         email: email,
         password: passwordHash,
-      }).then(function (user) {
-        setCookies(res, user.id);
-        res.redirect("/profile?username=" + encodeURIComponent(req.body.username));
       });
+
+      if (process.env.NODE_ENV === "development") {
+        // Seed mock user views so the user can immediately classify files locally
+        try {
+          await seedUserViews(models, user.id);
+          console.log(`Seeded default UserViews for registered user: ${user.username}`);
+        } catch (err) {
+          console.error("Error seeding UserViews on registration:", err);
+        }
+      }
+      setCookies(res, user.id);
+      return res.redirect("/profile?username=" + encodeURIComponent(req.body.username));
     } else {
-      res.render("account/register", { errors: "Username or Email already in user" });
+      return res.render("account/register", { errors: "Username or Email already in use" });
     }
-  });
+  } catch (error) {
+    console.error("Error during registration:", error);
+    return res.render("account/register", { errors: "An error occurred. Please try again." });
+  }
 });
 
-accountRoutes.post("/login", authRateLimiter, function (req, res) {
-  if (req.body.username == null || req.body.username.length == 0) {
+accountRoutes.post("/login", authRateLimiter, async (req, res) => {
+  if (req.body.username == null || req.body.username.length === 0) {
     return handleUnsuccessfulLogin(res, "Please enter a username.");
   }
 
-  var matched_users_promise = models.User.findOne({
-    where: Sequelize.and({ username: req.body.username }),
-  });
-
-
-  matched_users_promise
-    .then(function (user) {
-      if (isValidPassword(user, req.body.password)) {
-        setCookies(res, user.id);
-        res.redirect("/profile?username=" + encodeURIComponent(req.body.username));
-      } else {
-        handleUnsuccessfulLogin(res);
-      }
-    })
-    .catch(function (error) {
-      console.error("Error during login:", error);
-      handleUnsuccessfulLogin(res);
+  try {
+    const user = await models.User.findOne({
+      where: { username: req.body.username },
     });
+
+    const isValid = await isValidPassword(user, req.body.password);
+    if (isValid) {
+      setCookies(res, user.id);
+      return res.redirect("/profile?username=" + encodeURIComponent(req.body.username));
+    } else {
+      return handleUnsuccessfulLogin(res);
+    }
+  } catch (error) {
+    console.error("Error during login:", error);
+    return handleUnsuccessfulLogin(res);
+  }
 });
 
 function handleUnsuccessfulLogin(res, errorMessage = "Invalid username or password.") {
@@ -105,14 +112,13 @@ function handleUnsuccessfulLogin(res, errorMessage = "Invalid username or passwo
 // timing constant whether or not the username exists.
 const DUMMY_PASSWORD_HASH = bcrypt.hashSync("dummy-password-for-timing", 10);
 
-const isValidPassword = (user, enteredPassword) => {
+const isValidPassword = async (user, enteredPassword) => {
   if (!user) {
-    bcrypt.compareSync(enteredPassword, DUMMY_PASSWORD_HASH);
+    await bcrypt.compare(enteredPassword, DUMMY_PASSWORD_HASH);
     return false;
   }
-  return bcrypt.compareSync(enteredPassword, user.password);
+  return bcrypt.compare(enteredPassword, user.password);
 };
-
 
 const setCookies = (res, userId) => {
   // Cookie expires in 86400000 ms = 24 hours
@@ -130,9 +136,9 @@ const setCookies = (res, userId) => {
 async function getTopUsers(limit = 10) {
   try {
     const topUsers = await models.User.findAll({
-      attributes: ['username', 'classified_file_count'],
-      order: [['classified_file_count', 'DESC']],
-      limit: limit
+      attributes: ["username", "classified_file_count"],
+      order: [["classified_file_count", "DESC"]],
+      limit: limit,
     });
     return topUsers;
   } catch (error) {
@@ -141,10 +147,9 @@ async function getTopUsers(limit = 10) {
   }
 }
 
-accountRoutes.get("/profile", async function (req, res) {
+accountRoutes.get("/profile", async (req, res) => {
   const authenticated = isAuthenticated(req);
-  console.log("Authenticated:", authenticated)
-  // console.log("Session", req.session);
+  console.log("Authenticated:", authenticated);
   if (!authenticated) {
     res.redirect("/login");
   } else {
@@ -155,19 +160,19 @@ accountRoutes.get("/profile", async function (req, res) {
     }
     try {
       const topUsers = await getTopUsers(10);
-      res.render("profile/profile", { username: username, topUsers: topUsers })
+      res.render("profile/profile", { username: username, topUsers: topUsers });
     } catch (error) {
       console.error("Error fetching top users:", error);
-      res.render("profile/profile", { username: username, topUsers: [] })
+      res.render("profile/profile", { username: username, topUsers: [] });
     }
   }
 });
 
-accountRoutes.get("/logout", function (req, res) {
+accountRoutes.get("/logout", (req, res) => {
   // Clear cookies
   res.clearCookie("user_id");
   res.clearCookie("token");
-  res.render("account/logout-success");  
+  res.render("account/logout-success");
 });
 
 module.exports = accountRoutes;

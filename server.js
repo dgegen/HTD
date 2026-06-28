@@ -70,11 +70,25 @@ app.get("/login", (req, res) => {
 
 if (require.main === module) {
   const port = process.env.PORT || 8000;
-  const hostname = app.get("env") != "development" ? "0.0.0.0" : "localhost";
+  const isDev = app.get("env") === "development";
+  const hostname = isDev ? "localhost" : "0.0.0.0";
 
-  app.listen(port, hostname, () => {
-    console.log(`Server is running on port ${port}`);
-  });
+  const startServer = () => {
+    app.listen(port, hostname, () => {
+      console.log(`Server is running on port ${port}`);
+    });
+  };
+
+  if (isDev && config.dialect === "sqlite") {
+    // SQLite dev setups have no migration step, so sync the schema on every start.
+    // MySQL dev setups use migrations/database_structure.sql instead (see README).
+    const models = require("./models");
+    models.sequelize.sync().then(startServer).catch((err) => {
+      console.error("Failed to sync database models on startup:", err);
+    });
+  } else {
+    startServer();
+  }
 }
 
 module.exports = app;

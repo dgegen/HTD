@@ -9,68 +9,63 @@ const config = require("../config/config.js");
 const max_file_id = config.max_file_id;
 
 // Handle POST requests to '/post'
-function handlePostRequest(user_id, file_id_user, view_index_user, time, certainty) {
-  return new Promise(async (resolve, reject) => {
-    console.log("handlePostRequest", { user_id, file_id_user, view_index_user, time, certainty });
-    try {
-      const user = await models.User.findOne({
-        attributes: ["id", "view_index"],
-        where: { id: user_id },
-      });
+async function handlePostRequest(user_id, file_id_user, view_index_user, time, certainty) {
+  console.log("handlePostRequest", { user_id, file_id_user, view_index_user, time, certainty });
+  try {
+    const user = await models.User.findOne({
+      attributes: ["id", "view_index"],
+      where: { id: user_id },
+    });
 
-      if (!user) {
-        throw new Error("User not found");
-      }
+    if (!user) {
+      throw new Error("User not found");
+    }
 
-      // const file_id = user.get("file_id");
-      const view_index = user.get("view_index")
+    // const file_id = user.get("file_id");
+    const view_index = user.get("view_index")
 
-      if (view_index != view_index_user) {
-        // This can happen if the user was working in different active sessions
-        // We will then discard this post request, as it is outdated
-        console.log(
-          `Discarding post request of user ${user_id}, as it is outdated `
-          + `(User's file_id ${view_index_user} != ${view_index}). Update current data.`
-        );
-        resolve(view_index);
-        return;
-      }
-
-      // const file_id = file_id_user;  // TODO: Lookup in UserViews table
-      const file_id = await getUserViewIndex(user_id, view_index, file_id_user);
+    if (view_index != view_index_user) {
+      // This can happen if the user was working in different active sessions
+      // We will then discard this post request, as it is outdated
       console.log(
-        `User ${user_id} is posting ${time.length} entries to file ${file_id} ` 
-        + `with certainty ${certainty} at view index ${view_index}.`
+        `Discarding post request of user ${user_id}, as it is outdated `
+        + `(User's file_id ${view_index_user} != ${view_index}). Update current data.`
       );
+      return view_index;
+    }
 
-      if (time.length === 0) {
-        await models.Post.create({
+    // const file_id = file_id_user;  // TODO: Lookup in UserViews table
+    const file_id = await getUserViewIndex(user_id, view_index, file_id_user);
+    console.log(
+      `User ${user_id} is posting ${time.length} entries to file ${file_id} ` 
+      + `with certainty ${certainty} at view index ${view_index}.`
+    );
+
+    const posts = time.length === 0
+      ? [{
           file_id: parseInt(file_id, 10),
           time: null,
           user_id: parseInt(user_id, 10),
           certainty: parseInt(certainty, 10),
-        });
-      } else {
-        for (const t of time) {
-          await models.Post.create({
-            file_id: parseInt(file_id, 10),
-            time: t,
-            user_id: parseInt(user_id, 10),
-            certainty: parseInt(certainty, 10),
-          });
-        }
-      }
+        }]
+      : time.map(t => ({
+          file_id: parseInt(file_id, 10),
+          time: t,
+          user_id: parseInt(user_id, 10),
+          certainty: parseInt(certainty, 10),
+        }));
 
-      const updated_view_index = (view_index + 1) % max_file_id;
-      await updateUserViewIndex(user_id, updated_view_index);
+    await models.Post.bulkCreate(posts);
 
-      console.log(`User ${user_id}'s posting sucessful. New file id is ${updated_view_index}.`);
-      resolve(updated_view_index);
-    } catch (err) {
-      console.error("Error in post:", err);
-      reject(err);
-    }
-  });
+    const updated_view_index = (view_index + 1) % max_file_id;
+    await updateUserViewIndex(user_id, updated_view_index);
+
+    console.log(`User ${user_id}'s posting sucessful. New file id is ${updated_view_index}.`);
+    return updated_view_index;
+  } catch (err) {
+    console.error("Error in post:", err);
+    throw err;
+  }
 }
 
 

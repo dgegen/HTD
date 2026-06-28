@@ -39,7 +39,7 @@ module.exports = (sequelize) => {
         allowNull: false,
         defaultValue: 0,
         comment: 'Number of files classified by the user',
-      },      
+      },
     }, {
     sequelize,
     modelName: 'User',

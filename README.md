@@ -4,7 +4,6 @@ This project is a web application designed for data classification and visualiza
 
 ## Installation
 
-
 1. Clone the repository
     ```bash
     git clone git@github.com:dgegen/HTD.git
@@ -16,8 +15,16 @@ This project is a web application designed for data classification and visualiza
     npm install
     ```
 
-4. Download and install **[MySQL](https://dev.mysql.com/downloads/installer/)**
-5. Set Up the MySQL Database
+### Option A: Quick Start (SQLite - Recommended for local testing)
+This option sets up an SQLite database and generates mock data files automatically, letting you run and test the app in seconds.
+Run the setup script:
+```bash
+npm run setup -- --sqlite
+```
+
+### Option B: Full MySQL Setup (Production / Matching Production Dialect)
+1. Download and install **[MySQL](https://dev.mysql.com/downloads/installer/)**
+2. Set Up the MySQL Database:
     1. Log into the MySQL Database
         ```sql
         mysql -u your_username -p
@@ -31,21 +38,22 @@ This project is a web application designed for data classification and visualiza
         ```bash
         mysql -u your_username -p htd < migrations/database_structure.sql
         ```
-6. Configuration
-    1. Copy the example configuration file to create your own configuration file. Run the following command in your terminal:
-    
+3. Configuration:
+    1. Copy the example configuration file:
        ```bash
-       cp config/config_example.json config/config.json
+       cp config/example_config.json config/config.json
        ```
-
-    2. Open `config/config.json` in your preferred text editor and make the necessary modifications. You will need to update the following fields:
-    
-       - **`host`**: Set this to your database host (e.g., `localhost`).
+    2. Open `config/config.json` and make the necessary modifications. Update the following fields in the `development` section:
+       - **`host`**: Set this to your database host (e.g., `127.0.0.1` or `localhost`).
        - **`username`**: Enter your MySQL database username.
        - **`password`**: Provide your MySQL database password. If your database does not require a password, you can use `__password__` as a placeholder.
-       - **`max_file_id`**: Specify the maximum number of files you want to allow for classification by users. Adjust this number according to your needs.
+       - **`max_file_id`**: Specify the maximum number of files you want to allow for classification by users.
+4. Run the MySQL Setup script (optional, to generate dummy user views and files):
+   ```bash
+   npm run setup -- --mysql
+   ```
 
-7. Add some data
+### 7. Data Setup
     ```bash
     cd data
     ```

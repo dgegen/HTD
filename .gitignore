@@ -37,8 +37,13 @@ node_modules
 data/*
 !data/.gitignore
 data_*/
+tutorial_data/*
+!tutorial_data/.gitignore
 
 config/config.json
 migrations/*.js
 
 scripts/output/*
+
+# Test database
+*.sqlite
