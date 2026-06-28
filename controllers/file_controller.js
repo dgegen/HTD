@@ -60,7 +60,7 @@ async function getUserFileId(user_id, view_index, fileType) {
 /**
  * Asynchronously retrieves a file based on the user's request and sends it as a response.
  */
-async function getFileAndSendResponse(req, res, fileType) {
+async function getFileAndSendResponse(req, res, next, fileType) {
   if (!req.signedCookies || !req.signedCookies.user_id) {
     // Add ip adress of the user
     console.log("Unauthorized access to file. IP:", req.ip);
@@ -85,24 +85,22 @@ async function getFileAndSendResponse(req, res, fileType) {
     const filePath = path.join(dataFolderPath, `${fileType}_${file_id_lookup}.csv.zlib`);
 
     console.log(
-      `User ${user_id} requested ${fileType} ${file_id_lookup} ${token ? "with token" : "without token"
-      }.`
+      `User ${user_id} requested ${fileType} ${file_id_lookup} ${token ? "with token" : "without token"}.`
     );
     res.setHeader("file_id", file_id_lookup);
     res.setHeader("view_index", view_index);
     res.sendFile(filePath);
   } catch (error) {
-    res.status(error.status || 500).json({ error: error.message || "Internal Server Error" });
-    console.error("Error sending file:", error);
+    next(error);
   }
 }
 
 router.get("/get_data/:token?", async (req, res, next) => {
-  await getFileAndSendResponse(req, res, "file");
+  await getFileAndSendResponse(req, res, next, "file");
 });
 
 router.get("/get_models/:token?", async (req, res, next) => {
-  await getFileAndSendResponse(req, res, "models");
+  await getFileAndSendResponse(req, res, next, "models");
 });
 
 router.use(errorHandler);

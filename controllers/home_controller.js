@@ -1,19 +1,14 @@
-// conrollers/home_controller.js
-var express = require("express");
+// controllers/home_controller.js
+const express = require("express");
 const isAuthenticated = require("../utils/isAuthenticated");
 
-// var path = require('path');
-var HomeRoutes = express.Router();
+const homeRoutes = express.Router();
 
-HomeRoutes.get("/", function (req, res) {
-  // let username = req.session.username;
-
+homeRoutes.get("/", (req, res) => {
   const authenticated = isAuthenticated(req);
   console.log("Is authenticated", authenticated);
-
   console.log("Home routes");
-  // is authenticated
   res.render("home/index", { authenticated: authenticated });
 });
 
-module.exports = HomeRoutes;
+module.exports = homeRoutes;
