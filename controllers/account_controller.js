@@ -5,6 +5,7 @@ const bcrypt = require("bcrypt");
 const isAuthenticated = require("../utils/isAuthenticated");
 
 const { generateUserToken } = require("../utils/tokenUtils")
+const config = require("../config/config.js");
 
 var accountRoutes = express.Router();
 
@@ -14,10 +15,16 @@ accountRoutes.get("/login", (req, res) => {
 });
 
 accountRoutes.get("/register", function (req, res) {
+  if (config.registrationEnabled === false) {
+    return res.redirect("/login?errors=Registration is currently disabled.");
+  }
   res.render("account/register", { errors: "" });
 });
 
 accountRoutes.post("/register", function (req, res) {
+  if (config.registrationEnabled === false) {
+    return res.redirect("/login?errors=Registration is currently disabled.");
+  }
   const email = req.body.email || "";
 
   let matched_users_promise;

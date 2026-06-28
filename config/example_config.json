@@ -7,7 +7,8 @@
     "dialect": "mysql",
     "secretTokenKey": "some_secret_key",
     "max_file_id": 50,
-    "num_tutorial_files": 10
+    "num_tutorial_files": 10,
+    "registrationEnabled": true
   },
   "test": {
     "username": "myUsername",
@@ -17,7 +18,8 @@
     "dialect": "mysql",
     "secretTokenKey": "some_secret_key",
     "max_file_id": 50,
-    "num_tutorial_files": 10
+    "num_tutorial_files": 10,
+    "registrationEnabled": true
   },
   "production": {
     "username": "myUsername",
@@ -27,6 +29,7 @@
     "dialect": "mysql",
     "secretTokenKey": "some_secret_key",
     "max_file_id": 50,
-    "num_tutorial_files": 50
+    "num_tutorial_files": 50,
+    "registrationEnabled": true
   }
 }

@@ -5,6 +5,7 @@ var cookieParser = require("cookie-parser");
 const favicon = require("serve-favicon");
 
 const path = require("path");
+const config = require("./config/config.js");
 
 const AccountRoutes = require("./controllers/account_controller");
 const HomeRoutes = require("./controllers/home_controller");
@@ -31,6 +32,12 @@ COOKIE_SECRET = "randomstringsessionsecret";
 app.use(cookieParser(COOKIE_SECRET));
 
 app.use(express.static(path.join(__dirname, "public")));
+
+// Expose registration toggle to all views
+app.use((req, res, next) => {
+  res.locals.registrationEnabled = config.registrationEnabled !== false;
+  next();
+});
 
 // session secret to add a level of extra security
 // app.use(
