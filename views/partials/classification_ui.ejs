@@ -1,0 +1,27 @@
+<div class="button-container">
+  <h2 class="container-title">Submission</h2>
+  <button type="button" onclick="graph.submitFunction(1)" style="width: 30%; padding: 10px 8px;">Ambiguous</button>
+  <button type="button" onclick="graph.submitFunction(2)" style="width: 30%; padding: 10px 8px;">Somewhat sure</button>
+  <button type="button" onclick="graph.submitFunction(3)" style="width: 30%; padding: 10px 8px;">Certain</button>
+</div>
+
+<div class="svg-container" id="svg-container" style="margin: 0 auto; text-align: center; width: 90vw; height: 69vh; padding-top: 10px;">
+  <svg id="scatter-plot" width="100%" height="100%" style="min-height: 420px;" aria-label="Scatter Plot"></svg>
+</div>
+
+<!-- Info pop-up -->
+<div id="info-popup" class="info-popup">
+  <span class="info-popup-close-cross" onclick="closeInfoPopup()">✖</span>
+  <p>
+    Mark the most prominent transit shape (if there are any) in the light curve shown in the top panel by clicking on it.
+    This generates a vertical line. If you see no transit, do not click on the plot.
+    After you decided if there is a transit or not, click on one of the submission buttons above the plot, depending on how confident you are in your classification.
+  </p>
+
+  <p>
+    We expect you to spend less than 10 seconds per image.
+  </p>
+</div>
+<div class="button-container" style="text-align: right; background-color: #11024100;">
+  <button class="info-button" onclick="toggleInfoPopup()" style="width: 43px; padding: 10px 8px;">?</button>
+</div>
