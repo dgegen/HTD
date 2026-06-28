@@ -25,7 +25,7 @@ class ConfigLoader:
         return self.config.get(key, default)
 
     def _load_config(self):
-        config_path = PROJECT_BASE / "config" / "test.json"
+        config_path = PROJECT_BASE / "config" / "config.json"
         if not config_path.exists():
             raise FileNotFoundError(f"Config file not found: {config_path}")
 
