@@ -10,7 +10,8 @@
     "num_tutorial_files": 10,
     "registrationEnabled": true,
     "authRateLimitWindowMs": 900000,
-    "authRateLimitMax": 5
+    "authRateLimitMax": 5,
+    "minViewTimeMs": 1500
   },
   "test": {
     "dialect": "sqlite",
@@ -21,7 +22,8 @@
     "num_tutorial_files": 10,
     "registrationEnabled": true,
     "authRateLimitWindowMs": 900000,
-    "authRateLimitMax": 5
+    "authRateLimitMax": 5,
+    "minViewTimeMs": 1500
   },
   "production": {
     "username": "myUsername",
@@ -32,6 +34,7 @@
     "secretTokenKey": "some_secret_key",
     "max_file_id": 50,
     "num_tutorial_files": 50,
-    "registrationEnabled": true
+    "registrationEnabled": true,
+    "minViewTimeMs": 1500
   }
 }

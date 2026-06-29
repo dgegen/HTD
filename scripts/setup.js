@@ -4,7 +4,6 @@ const path = require('path');
 const readline = require('readline');
 const zlib = require('zlib');
 const bcrypt = require('bcrypt');
-const seedUserViews = require('../utils/seedUserViews');
 
 const CONFIG_PATH = path.join(__dirname, '..', 'config', 'config.json');
 const CONFIG_EXAMPLE_PATH = path.join(__dirname, '..', 'config', 'example_config.json');
@@ -87,7 +86,7 @@ async function main() {
   const hashedPassword = bcrypt.hashSync(password, 10);
 
   try {
-    const user = await models.User.create({
+    await models.User.create({
       username: username,
       email: 'testuser@example.com',
       password: hashedPassword,
@@ -95,11 +94,6 @@ async function main() {
       classified_file_count: 0
     });
     console.log(`Successfully created user: ${username} (password: ${password})`);
-
-    // 5. Seed user view mapping
-    console.log('Seeding user views mapping...');
-    await seedUserViews(models, user.id);
-    console.log('Seeded UserViews records.');
   } catch (err) {
     console.error('Error seeding database:', err);
     process.exit(1);

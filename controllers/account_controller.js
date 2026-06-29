@@ -7,7 +7,6 @@ const isAuthenticated = require("../utils/isAuthenticated");
 
 const { generateUserToken } = require("../utils/tokenUtils");
 const config = require("../config/config.js");
-const seedUserViews = require("../utils/seedUserViews");
 
 const accountRoutes = express.Router();
 
@@ -61,15 +60,6 @@ accountRoutes.post("/register", authRateLimiter, async (req, res) => {
         password: passwordHash,
       });
 
-      if (process.env.NODE_ENV === "development") {
-        // Seed mock user views so the user can immediately classify files locally
-        try {
-          await seedUserViews(models, user.id);
-          console.log(`Seeded default UserViews for registered user: ${user.username}`);
-        } catch (err) {
-          console.error("Error seeding UserViews on registration:", err);
-        }
-      }
       setCookies(res, user.id);
       return res.redirect("/profile?username=" + encodeURIComponent(req.body.username));
     } else {

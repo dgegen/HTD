@@ -76,14 +76,27 @@ async function getUserViewIndex(user_id, view_index, file_id_user) {
       view_order: view_index,
     },
   });
-  if (!current_user_view) {
-    throw new Error(`view_index ${view_index} not found for user ${user_id}`);
+
+  if (current_user_view) {
+    const file_id = current_user_view.get("file_id");
+    if (file_id !== file_id_user) {
+      throw new Error(`File ID ${file_id} does not match user's file ID ${file_id_user}`);
+    }
+    return file_id;
   }
-  const file_id = current_user_view.get("file_id");
-  if (file_id !== file_id_user) {
-    throw new Error(`File ID ${file_id} does not match user's file ID ${file_id_user}`);
+
+  // No curated UserViews assignment for this slot; fall back to the same sequential
+  // numbering used by file_controller.js. Logged at warn level since it means this
+  // submission isn't part of the curated (randomized, balanced) batch assignment.
+  const expected_file_id = view_index + 1;
+  if (expected_file_id !== file_id_user) {
+    throw new Error(`File ID ${file_id_user} does not match expected sequential ID ${expected_file_id}`);
   }
-  return file_id;
+  console.warn(
+    `No UserViews entry for user_id ${user_id} at view_index ${view_index}; `
+    + `accepted sequential file_id ${expected_file_id}.`
+  );
+  return expected_file_id;
 }
 
 

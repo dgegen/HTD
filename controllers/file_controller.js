@@ -51,10 +51,18 @@ async function getUserFileId(user_id, view_index, fileType) {
       "for fileType:", fileType
     );
     return file_id_lookup;
-  } else {
-    console.log("No entry found for user_id:", user_id, "and view_index:", view_index);
-    return null;
   }
+
+  // No curated UserViews assignment (e.g. create_user_views.py hasn't been run for this
+  // user yet, or they've classified past the end of their assigned batch). Fall back to
+  // sequential files (1..max_file_id) so the user isn't blocked. Logged at warn level so
+  // this is visible/greppable, since it means this user's data isn't part of the curated
+  // (randomized, balanced) batch assignment.
+  console.warn(
+    `No UserViews entry for user_id ${user_id} at view_index ${view_index}; `
+    + `falling back to sequential file_id ${view_index + 1}.`
+  );
+  return view_index + 1;
 }
 
 /**
